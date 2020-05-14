@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Find Books</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href=".\CSS\searchBarStyle.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                var searchKeyword;
+                $("#searchButton").click(function onClick(){
+                    searchKeyword = $("#search").val();
+                    var searchUrl = "http://ec2-3-20-227-203.us-east-2.compute.amazonaws.com:5000/search/";
+                    searchUrl = searchUrl.concat(searchKeyword);
+                    $.ajax({
+                        url: searchUrl,
+                        datatype:"json",
+                        type:"GET",
+                        crossDomain : true,
+                        success: function(response){
+                            var d = JSON.parse(response);
+                            $("#resultTable").attr("border","1");
+                            $("#tHeader").html("<tr><th>Books</th><th>Authors</th></tr>");
+                            $("#tBody").empty();
+                            for (var j=0;j<d.length;j++){
+                                $("#tBody").append("<tr><td>"
+                                        +d[j].Book_Name
+                                        +"</td><td>"
+                                        +d[j].Author
+                                        +"</td></tr>");
+                            }
+                            $("#noteButtonDiv").empty();
+                            $("#noteButtonDiv").append("<input id=\"addNotes\" type=\"text\" placeholder=\"Add Notes here...\" />");
+                            $("#noteButtonDiv").append("<button id=\"noteButton\" onClick=\"callUrl()\" type=\"submit\" title=\"Add Notes\">Add Notes</button>");
+                        }
+                    });
+                    var logUrl = "http://ec2-3-20-227-203.us-east-2.compute.amazonaws.com:5050/log/";
+                    logUrl = logUrl.concat(searchKeyword)
+                    console.log(logUrl)
+                    $.ajax({
+                        url: logUrl,
+                        crossDomain: true,
+                        success: function(response){
+                            console.log("success");
+                        }
+                    });
+                    var showNoteUrl = "http://ec2-3-20-227-203.us-east-2.compute.amazonaws.com:5150/showNotes/";
+                    showNoteUrl=showNoteUrl.concat(searchKeyword);
+                    console.log(showNoteUrl);
+                    $.ajax({
+                        url: showNoteUrl,
+                        crossDomain: true,
+                        success: function (response){
+                            //console.log(response);
+                            console.log(typeof(response))
+                            if(response!="Null"){
+                                var d = JSON.stringify(response);
+                                d = JSON.parse(d)
+                                console.log(d['note']);
+                                var list = d['note'];
+                                console.log(list);
+                                $("#noteResults").empty();
+                                $("#noteResults").append("<h3>Notes Result</h3>");
+                                for (var i = 0;i<list.length;i++){
+                                    $("#noteResults").append("<p style=\"border: solid\">"+list[i]+"</p>");
+                                 }
+                            }
+                            else{
+                                $("#noteResults").empty();
+                                $("#noteResults").append("<p>No Notes Available</p>")
+                            }
+                        }
+                    });
+                    
+                });
+            });
+            
+            function callUrl(){
+                var searchKeyword = $("#search").val();
+                console.log('HELLO')
+                    var note = $("#addNotes").val();
+                    var addUrl = "http://ec2-3-20-227-203.us-east-2.compute.amazonaws.com:5150/addNotes/";
+                    addUrl = addUrl.concat(searchKeyword);
+                    
+                    addUrl = addUrl.concat("/"+note);
+                    console.log(addUrl)
+                    $.ajax({
+                       url: addUrl,
+                       crossDomain: true,
+                       success: function(response){
+                           console.log("success");
+                           $("#noteResults").append("<p style=\"border: solid\">"+note+"</p>");
+                       }
+                    });
+            }
+        </script>
+    </head>
+    <body>
+        <div id="searchBarDivision" style="text-align:center">
+            <h3>Search Book</h3>
+            <input id="search" type="text" placeholder="search..." />
+            <button id="searchButton" type="submit" title="Search">Search</button>
+        </div>
+        <div id="searchResultDivision" style="text-align: center">
+            <table id="resultTable" style="margin-top: 10px;margin-left:auto;margin-right:auto">
+                <thead id="tHeader">
+                </thead>
+                <tbody id="tBody"></tbody>
+            </table>
+        </div>
+        <div id="notesResultDivision" style="margin-top:10px">
+            <div id="noteResults" style="text-align:center; margin-top: 10px"></div>
+            <div id="noteButtonDiv" style="text-align:center; margin-top: 10px"></div>
+        </div>
+    </body>
+</html>
